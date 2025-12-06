@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Jackal's Garden - A peaceful pup generator teaching Nonviolent Communication through nurturing adorable jackal companions. Generate your unique jackal from over 7,000 combinations.">
+    <meta name="keywords" content="Jackal Generator, NVC, Nonviolent Communication, cute animals, character generator">
+    <meta name="author" content="Jackal's Garden">
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Jackal's Garden - Pup Generator">
+    <meta property="og:description" content="Generate your unique jackal companion from over 7,000 peaceful combinations">
+    <meta property="og:image" content="/preview.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Jackal's Garden - Pup Generator">
+    <meta name="twitter:description" content="Generate your unique jackal companion from over 7,000 peaceful combinations">
+
+    <title>Jackal's Garden - Pup Generator</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Elements -->
+    <div class="background-gradient"></div>
+    <div class="particles-container" id="particlesContainer" aria-hidden="true"></div>
+
+    <!-- Main Container -->
+    <main class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="title">
+                <span class="title-main">Jackal's Garden</span>
+                <span class="title-sub">Pup Generator</span>
+            </h1>
+            <p class="subtitle">~7,040 unique combinations</p>
+        </header>
+
+        <!-- Jackal Display Area -->
+        <section class="jackal-display-section" aria-label="Jackal Display">
+            <div class="jackal-container">
+                <canvas id="jackalCanvas"
+                        width="1024"
+                        height="1024"
+                        aria-label="Generated Jackal Character">
+                </canvas>
+                <div class="sparkle-container" id="sparkleContainer" aria-hidden="true"></div>
+            </div>
+        </section>
+
+        <!-- Controls -->
+        <section class="controls" aria-label="Generator Controls">
+            <button id="generateBtn"
+                    class="btn btn-primary"
+                    aria-label="Generate a new jackal (Spacebar)">
+                <span class="btn-icon">🐾</span>
+                <span class="btn-text">Generate Jackal</span>
+            </button>
+
+            <div class="secondary-controls">
+                <button id="downloadBtn"
+                        class="btn btn-secondary"
+                        aria-label="Download current jackal as PNG (D key)">
+                    <span class="btn-icon">💾</span>
+                    <span class="btn-text">Download PNG</span>
+                </button>
+
+                <button id="toggleTraitsBtn"
+                        class="btn btn-secondary"
+                        aria-label="Toggle trait panel (T key)">
+                    <span class="btn-icon">📋</span>
+                    <span class="btn-text">View Traits</span>
+                </button>
+
+                <button id="muteBtn"
+                        class="btn btn-secondary"
+                        aria-label="Mute/unmute sounds (M key)"
+                        aria-pressed="false">
+                    <span class="btn-icon" id="muteIcon">🔊</span>
+                    <span class="btn-text">Sound</span>
+                </button>
+
+                <button id="helpBtn"
+                        class="btn btn-secondary"
+                        aria-label="Show keyboard shortcuts (? key)">
+                    <span class="btn-icon">❓</span>
+                    <span class="btn-text">Help</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <div id="loadingOverlay" class="loading-overlay" aria-live="polite">
+            <div class="loading-content">
+                <div class="paw-prints">
+                    <span class="paw">🐾</span>
+                    <span class="paw">🐾</span>
+                    <span class="paw">🐾</span>
+                </div>
+                <p class="loading-text">Preparing the garden...</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Trait Panel (Slide-out) -->
+    <aside id="traitPanel" class="trait-panel" aria-label="Current Jackal Traits" aria-hidden="true">
+        <div class="trait-panel-header">
+            <h2>Current Traits</h2>
+            <button id="closeTraitsBtn"
+                    class="close-btn"
+                    aria-label="Close trait panel">
+                ✕
+            </button>
+        </div>
+        <div class="trait-panel-content">
+            <div class="trait-item">
+                <span class="trait-icon">🎨</span>
+                <div class="trait-info">
+                    <span class="trait-label">Base</span>
+                    <span class="trait-value" id="traitBase">-</span>
+                </div>
+            </div>
+            <div class="trait-item">
+                <span class="trait-icon">🌊</span>
+                <div class="trait-info">
+                    <span class="trait-label">Tail</span>
+                    <span class="trait-value" id="traitTail">-</span>
+                </div>
+            </div>
+            <div class="trait-item">
+                <span class="trait-icon">👂</span>
+                <div class="trait-info">
+                    <span class="trait-label">Ears</span>
+                    <span class="trait-value" id="traitEars">-</span>
+                </div>
+            </div>
+            <div class="trait-item">
+                <span class="trait-icon">👀</span>
+                <div class="trait-info">
+                    <span class="trait-label">Eyes</span>
+                    <span class="trait-value" id="traitEyes">-</span>
+                </div>
+            </div>
+            <div class="trait-item">
+                <span class="trait-icon">〰️</span>
+                <div class="trait-info">
+                    <span class="trait-label">Eyebrows</span>
+                    <span class="trait-value" id="traitEyebrows">-</span>
+                </div>
+            </div>
+            <div class="trait-item">
+                <span class="trait-icon">👃</span>
+                <div class="trait-info">
+                    <span class="trait-label">Nose</span>
+                    <span class="trait-value" id="traitNose">-</span>
+                </div>
+            </div>
+            <div class="trait-item">
+                <span class="trait-icon">😊</span>
+                <div class="trait-info">
+                    <span class="trait-label">Mouth</span>
+                    <span class="trait-value" id="traitMouth">-</span>
+                </div>
+            </div>
+            <div class="trait-item">
+                <span class="trait-icon">✨</span>
+                <div class="trait-info">
+                    <span class="trait-label">Accessory</span>
+                    <span class="trait-value" id="traitAccessory">-</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Help Overlay -->
+    <div id="helpOverlay" class="help-overlay" aria-hidden="true" role="dialog" aria-labelledby="helpTitle">
+        <div class="help-content">
+            <button id="closeHelpBtn"
+                    class="close-btn"
+                    aria-label="Close help dialog">
+                ✕
+            </button>
+            <h2 id="helpTitle">Keyboard Shortcuts</h2>
+            <dl class="shortcuts-list">
+                <div class="shortcut-item">
+                    <dt><kbd>Spacebar</kbd></dt>
+                    <dd>Generate new jackal</dd>
+                </div>
+                <div class="shortcut-item">
+                    <dt><kbd>D</kbd></dt>
+                    <dd>Download current jackal</dd>
+                </div>
+                <div class="shortcut-item">
+                    <dt><kbd>T</kbd></dt>
+                    <dd>Toggle trait panel</dd>
+                </div>
+                <div class="shortcut-item">
+                    <dt><kbd>M</kbd></dt>
+                    <dd>Mute/unmute sounds</dd>
+                </div>
+                <div class="shortcut-item">
+                    <dt><kbd>?</kbd></dt>
+                    <dd>Show this help</dd>
+                </div>
+                <div class="shortcut-item">
+                    <dt><kbd>Esc</kbd></dt>
+                    <dd>Close panels</dd>
+                </div>
+            </dl>
+            <div class="help-footer">
+                <p>Welcome to Jackal's Garden - a peaceful sanctuary for nurturing emotional honesty through Nonviolent Communication.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
