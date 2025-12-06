@@ -73,6 +73,8 @@ const state = {
     isGenerating: false,
     isMuted: false,
     audioContext: null,
+    generationCount: 0,
+    lastGenerateTime: 0,
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -542,6 +544,46 @@ class VisualEffects {
         void container.offsetWidth;
         container.style.animation = 'breathe 3s ease-in-out infinite';
     }
+
+    // Poof cloud effect
+    static createPoofCloud() {
+        const container = document.querySelector('.jackal-container');
+        const poof = document.createElement('div');
+        poof.className = 'poof-cloud';
+        container.appendChild(poof);
+
+        // Remove after animation
+        setTimeout(() => {
+            poof.remove();
+        }, 300);
+    }
+
+    // Confetti falling particles
+    static createConfetti() {
+        const container = document.getElementById('sparkleContainer');
+        const confettiChars = ['⭐', '✨', '🌟', '💫', '✦'];
+        const confettiCount = 6;
+
+        for (let i = 0; i < confettiCount; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.textContent = confettiChars[Math.floor(Math.random() * confettiChars.length)];
+
+            // Random horizontal position at top
+            confetti.style.left = `${20 + Math.random() * 60}%`;
+            confetti.style.top = '-20px';
+
+            // Random animation delay
+            confetti.style.animationDelay = `${Math.random() * 0.3}s`;
+
+            container.appendChild(confetti);
+
+            // Remove after animation
+            setTimeout(() => {
+                confetti.remove();
+            }, 1500);
+        }
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -549,9 +591,10 @@ class VisualEffects {
    ═══════════════════════════════════════════════════════════════ */
 
 class UIController {
-    static updateTraitPanel(jackal) {
+    static async updateTraitPanel(jackal) {
         const traits = JackalGenerator.getTraitNames(jackal);
 
+        // Update text
         document.getElementById('traitBase').textContent = traits.base;
         document.getElementById('traitTail').textContent = traits.tail;
         document.getElementById('traitEars').textContent = traits.ears;
@@ -560,6 +603,63 @@ class UIController {
         document.getElementById('traitNose').textContent = traits.nose;
         document.getElementById('traitMouth').textContent = traits.mouth;
         document.getElementById('traitAccessory').textContent = traits.accessory;
+
+        // Render miniatures
+        await this.renderMiniature('miniBase', jackal.base);
+        await this.renderMiniature('miniTail', jackal.tail);
+        await this.renderMiniature('miniEars', jackal.ears);
+        await this.renderMiniature('miniEyes', `eyes/eyes_${jackal.eyes}.png`);
+
+        if (jackal.eyebrows) {
+            await this.renderMiniature('miniEyebrows', `eyebrows/${jackal.eyebrows}`);
+        } else {
+            this.clearMiniature('miniEyebrows');
+        }
+
+        await this.renderMiniature('miniNose', `noses/${jackal.nose}`);
+
+        if (jackal.mouth) {
+            await this.renderMiniature('miniMouth', `mouths/${jackal.mouth}`);
+        } else {
+            this.clearMiniature('miniMouth');
+        }
+
+        if (jackal.accessory) {
+            await this.renderMiniature('miniAccessory', `accessories/${jackal.accessory}`);
+        } else {
+            this.clearMiniature('miniAccessory');
+        }
+    }
+
+    static async renderMiniature(canvasId, imagePath) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const container = canvas.parentElement;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        container.classList.remove('empty');
+
+        try {
+            const img = await ImageLoader.loadImage(imagePath);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        } catch (error) {
+            console.error(`Failed to render miniature for ${canvasId}:`, error);
+            this.clearMiniature(canvasId);
+        }
+    }
+
+    static clearMiniature(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const container = canvas.parentElement;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        container.classList.add('empty');
     }
 
     static toggleTraitPanel() {
@@ -638,38 +738,127 @@ class UIController {
 const renderer = new CanvasRenderer('jackalCanvas');
 
 async function generateNewJackal() {
+    // Debounce rapid clicks (prevent spam)
+    const now = Date.now();
+    if (now - state.lastGenerateTime < 300) {
+        return;
+    }
+    state.lastGenerateTime = now;
+
     if (state.isGenerating) return;
 
     state.isGenerating = true;
-    soundGenerator.playGenerate();
+    state.generationCount++;
 
     const canvas = document.getElementById('jackalCanvas');
+    const container = document.querySelector('.jackal-container');
 
-    // Fade out current jackal
-    canvas.classList.add('fade-out');
+    // STEP 1: Play initial sound
+    soundGenerator.playGenerate();
 
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // STEP 2: OLD jackal exit animation
+    canvas.classList.add('exit-animation');
+    await new Promise(resolve => setTimeout(resolve, 200));
 
-    // Generate new jackal
+    // STEP 3: Brief pause - clear canvas
+    renderer.clear();
+    canvas.classList.remove('exit-animation');
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // STEP 4: Generate new jackal
     const jackal = JackalGenerator.generate();
     state.currentJackal = jackal;
 
-    // Render new jackal
+    // Create poof cloud effect
+    VisualEffects.createPoofCloud();
+
+    // Render new jackal (hidden initially)
     await renderer.renderJackal(jackal);
 
     // Update trait panel
     UIController.updateTraitPanel(jackal);
 
-    // Fade in new jackal
-    canvas.classList.remove('fade-out');
+    // STEP 5: NEW jackal entrance animation
+    canvas.classList.add('entrance-animation');
 
-    // Visual effects
-    VisualEffects.createSparkles();
+    await new Promise(resolve => setTimeout(resolve, 150));
+
+    // Play appear sound after jackal starts appearing
     soundGenerator.playAppear();
+
+    await new Promise(resolve => setTimeout(resolve, 250));
+
+    // Remove entrance animation
+    canvas.classList.remove('entrance-animation');
+
+    // STEP 6: Celebration micro-animation
+    // Camera shake
+    container.classList.add('shake');
+    setTimeout(() => container.classList.remove('shake'), 100);
+
+    // Sparkle burst
+    VisualEffects.createSparkles();
+
+    // Confetti particles
+    VisualEffects.createConfetti();
+
+    // Glow pulse
+    container.classList.add('glow-pulse');
+    setTimeout(() => container.classList.remove('glow-pulse'), 600);
 
     await new Promise(resolve => setTimeout(resolve, 100));
 
+    // Save generation count to localStorage
+    saveGenerationCount();
+
+    // Check for milestone celebrations
+    checkMilestone();
+
     state.isGenerating = false;
+}
+
+// Check for generation milestones
+function checkMilestone() {
+    const count = state.generationCount;
+    const milestones = {
+        10: "🎉 10 jackals generated!",
+        25: "✨ 25 jackals! You're on a roll!",
+        50: "🌟 Wow! 50 unique jackals!",
+        100: "🏆 Amazing! 100 jackals generated!",
+        250: "💫 Incredible! 250 jackals!",
+        500: "🎊 Legendary! 500 jackals!"
+    };
+
+    if (milestones[count]) {
+        // Show celebration message
+        setTimeout(() => {
+            showToast(milestones[count]);
+            soundGenerator.playSuccess();
+        }, 500);
+    }
+}
+
+// Toast notification system
+function showToast(message) {
+    // Remove existing toast if any
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -785,6 +974,12 @@ async function init() {
     const loadingOverlay = document.getElementById('loadingOverlay');
 
     try {
+        // Load generation count from localStorage
+        const savedCount = localStorage.getItem('jackalGenerationCount');
+        if (savedCount) {
+            state.generationCount = parseInt(savedCount, 10);
+        }
+
         // Preload all assets
         await ImageLoader.preloadAllAssets();
 
@@ -797,11 +992,23 @@ async function init() {
         // Setup keyboard shortcuts
         setupKeyboardShortcuts();
 
-        // Hide loading overlay
+        // Hide loading overlay with smooth transition
         loadingOverlay.classList.add('hidden');
+
+        // Brief pause for dramatic effect
+        await new Promise(resolve => setTimeout(resolve, 300));
 
         // Generate first jackal
         await generateNewJackal();
+
+        // First visit experience
+        const isFirstVisit = !localStorage.getItem('jackalVisited');
+        if (isFirstVisit) {
+            localStorage.setItem('jackalVisited', 'true');
+            setTimeout(() => {
+                showToast('✨ Welcome to Jackal\'s Garden! Press Spacebar to generate.');
+            }, 1000);
+        }
 
         console.log('✅ Garden is ready!');
     } catch (error) {
@@ -813,6 +1020,11 @@ async function init() {
             </div>
         `;
     }
+}
+
+// Save generation count to localStorage
+function saveGenerationCount() {
+    localStorage.setItem('jackalGenerationCount', state.generationCount.toString());
 }
 
 // Start the app when DOM is ready
