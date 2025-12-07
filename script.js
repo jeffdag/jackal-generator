@@ -377,8 +377,8 @@ class ImageLoader {
             allPaths.push(`eyes/eyes_${type}.png`);
         });
 
-        // Nose
-        allPaths.push(`noses/${ASSETS.nose}`);
+        // Nose (singular "nose" folder as per user's file structure)
+        allPaths.push(`nose/${ASSETS.nose}`);
 
         // Mouths
         ASSETS.mouths.forEach(type => {
@@ -461,8 +461,8 @@ class CanvasRenderer {
         // 5. Eyes
         await this.drawLayer(`eyes/eyes_${jackal.eyes}.png`);
 
-        // 6. Nose
-        await this.drawLayer(`noses/${jackal.nose}`);
+        // 6. Nose (ALWAYS VISIBLE - singular "nose" folder)
+        await this.drawLayer(`nose/${jackal.nose}`);
 
         // 7. Mouth (if applicable)
         if (jackal.mouth) {
@@ -481,24 +481,33 @@ class CanvasRenderer {
    ═══════════════════════════════════════════════════════════════ */
 
 class VisualEffects {
-    // Create floating particles
+    // Create colorful floating particles - Desert Wind
     static createParticles() {
         const container = document.getElementById('particlesContainer');
-        const particleCount = 30;
+        const particleTypes = ['dust', 'petal', 'sparkle', 'orb'];
+        const particleCount = 40; // More particles for vibrant effect
 
         for (let i = 0; i < particleCount; i++) {
             const particle = document.createElement('div');
-            particle.className = 'particle';
+
+            // Random particle type
+            const type = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+            particle.className = `particle ${type}`;
 
             // Random starting position
             particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${100 + Math.random() * 20}%`; // Start below viewport
 
-            // Random animation duration (10-30 seconds)
-            const duration = 10 + Math.random() * 20;
+            // Random animation duration (8-25 seconds)
+            const duration = 8 + Math.random() * 17;
             particle.style.animationDuration = `${duration}s`;
 
             // Random delay
             particle.style.animationDelay = `${Math.random() * 5}s`;
+
+            // Random horizontal drift
+            const drift = -20 + Math.random() * 40;
+            particle.style.setProperty('--drift', `${drift}px`);
 
             container.appendChild(particle);
         }
@@ -616,7 +625,7 @@ class UIController {
             this.clearMiniature('miniEyebrows');
         }
 
-        await this.renderMiniature('miniNose', `noses/${jackal.nose}`);
+        await this.renderMiniature('miniNose', `nose/${jackal.nose}`);
 
         if (jackal.mouth) {
             await this.renderMiniature('miniMouth', `mouths/${jackal.mouth}`);
