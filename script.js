@@ -911,47 +911,136 @@ function setupKeyboardShortcuts() {
    ═══════════════════════════════════════════════════════════════ */
 
 function setupEventListeners() {
+    // Hamburger menu
+    document.getElementById('hamburgerBtn').addEventListener('click', () => {
+        soundGenerator.playButtonClick();
+        document.getElementById('sideMenu').classList.add('open');
+        document.getElementById('menuBackdrop').classList.add('open');
+    });
+
+    // Menu close button
+    document.getElementById('menuCloseBtn').addEventListener('click', () => {
+        soundGenerator.playButtonClick();
+        document.getElementById('sideMenu').classList.remove('open');
+        document.getElementById('menuBackdrop').classList.remove('open');
+    });
+
+    // Menu backdrop click
+    document.getElementById('menuBackdrop').addEventListener('click', () => {
+        document.getElementById('sideMenu').classList.remove('open');
+        document.getElementById('menuBackdrop').classList.remove('open');
+    });
+
     // Generate button
     document.getElementById('generateBtn').addEventListener('click', () => {
         soundGenerator.playButtonClick();
         generateNewJackal();
     });
 
-    // Download button
-    document.getElementById('downloadBtn').addEventListener('click', () => {
+    // Menu Download button
+    document.getElementById('downloadBtnMenu').addEventListener('click', () => {
         UIController.downloadJackal();
+        document.getElementById('sideMenu').classList.remove('open');
+        document.getElementById('menuBackdrop').classList.remove('open');
     });
 
-    // Trait panel toggle
-    document.getElementById('toggleTraitsBtn').addEventListener('click', () => {
+    // Legacy Download button (if exists)
+    const downloadBtn = document.getElementById('downloadBtn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            UIController.downloadJackal();
+        });
+    }
+
+    // Menu Trait panel toggle
+    document.getElementById('toggleTraitsBtnMenu').addEventListener('click', () => {
         UIController.toggleTraitPanel();
+        document.getElementById('sideMenu').classList.remove('open');
+        document.getElementById('menuBackdrop').classList.remove('open');
     });
+
+    // Legacy Trait panel toggle (if exists)
+    const toggleTraitsBtn = document.getElementById('toggleTraitsBtn');
+    if (toggleTraitsBtn) {
+        toggleTraitsBtn.addEventListener('click', () => {
+            UIController.toggleTraitPanel();
+        });
+    }
 
     // Close trait panel
-    document.getElementById('closeTraitsBtn').addEventListener('click', () => {
-        UIController.closeTraitPanel();
+    const closeTraitsBtn = document.getElementById('closeTraitsBtn');
+    if (closeTraitsBtn) {
+        closeTraitsBtn.addEventListener('click', () => {
+            UIController.closeTraitPanel();
+        });
+    }
+
+    // Menu Mute button
+    document.getElementById('muteBtnMenu').addEventListener('click', () => {
+        state.isMuted = !state.isMuted;
+        const icon = document.getElementById('muteIconMenu');
+        const btn = document.getElementById('muteBtnMenu');
+        btn.setAttribute('aria-pressed', state.isMuted);
+        icon.textContent = state.isMuted ? '🔇' : '🔊';
+
+        // Also update legacy button if it exists
+        const legacyIcon = document.getElementById('muteIcon');
+        const legacyBtn = document.getElementById('muteBtn');
+        if (legacyIcon) legacyIcon.textContent = state.isMuted ? '🔇' : '🔊';
+        if (legacyBtn) legacyBtn.setAttribute('aria-pressed', state.isMuted);
+
+        soundGenerator.playButtonClick();
+        document.getElementById('sideMenu').classList.remove('open');
+        document.getElementById('menuBackdrop').classList.remove('open');
     });
 
-    // Mute button
-    document.getElementById('muteBtn').addEventListener('click', () => {
-        UIController.toggleMute();
-    });
+    // Legacy Mute button (if exists)
+    const muteBtn = document.getElementById('muteBtn');
+    if (muteBtn) {
+        muteBtn.addEventListener('click', () => {
+            UIController.toggleMute();
+        });
+    }
 
-    // Help button
-    document.getElementById('helpBtn').addEventListener('click', () => {
+    // Menu Help button
+    document.getElementById('helpBtnMenu').addEventListener('click', () => {
         UIController.toggleHelp();
+        document.getElementById('sideMenu').classList.remove('open');
+        document.getElementById('menuBackdrop').classList.remove('open');
     });
+
+    // Legacy Help button (if exists)
+    const helpBtn = document.getElementById('helpBtn');
+    if (helpBtn) {
+        helpBtn.addEventListener('click', () => {
+            UIController.toggleHelp();
+        });
+    }
 
     // Close help
-    document.getElementById('closeHelpBtn').addEventListener('click', () => {
-        UIController.closeHelp();
-    });
+    const closeHelpBtn = document.getElementById('closeHelpBtn');
+    if (closeHelpBtn) {
+        closeHelpBtn.addEventListener('click', () => {
+            UIController.closeHelp();
+        });
+    }
 
-    // Play Store button (non-functional, coming soon)
-    document.getElementById('playStoreBtn').addEventListener('click', () => {
+    // Menu Play Store button (non-functional, coming soon)
+    document.getElementById('playStoreBtnMenu').addEventListener('click', () => {
         soundGenerator.playButtonClick();
         showToast('📱 Coming soon to Play Store!');
+        document.getElementById('sideMenu').classList.remove('open');
+        document.getElementById('menuBackdrop').classList.remove('open');
     });
+
+    // Legacy Play Store button (if exists)
+    const playStoreBtn = document.getElementById('playStoreBtn');
+    if (playStoreBtn) {
+        playStoreBtn.addEventListener('click', () => {
+            soundGenerator.playButtonClick();
+            showToast('📱 Coming soon to Play Store!');
+        });
+    }
 
     // Close overlays on background click
     document.getElementById('helpOverlay').addEventListener('click', (e) => {
