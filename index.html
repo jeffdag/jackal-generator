@@ -45,14 +45,14 @@
             <button id="downloadBtnMenu"
                     class="btn btn-secondary"
                     aria-label="Download current jackal as PNG (D key)">
-                <span class="btn-icon">💾</span>
+                <span class="btn-icon">⬇</span>
                 <span class="btn-text">Download PNG</span>
             </button>
 
             <button id="toggleTraitsBtnMenu"
                     class="btn btn-secondary"
                     aria-label="Toggle trait panel (T key)">
-                <span class="btn-icon">📋</span>
+                <span class="btn-icon">☰</span>
                 <span class="btn-text">View Traits</span>
             </button>
 
@@ -60,21 +60,21 @@
                     class="btn btn-secondary"
                     aria-label="Mute/unmute sounds (M key)"
                     aria-pressed="false">
-                <span class="btn-icon" id="muteIconMenu">🔊</span>
+                <span class="btn-icon" id="muteIconMenu">♪</span>
                 <span class="btn-text">Sound</span>
             </button>
 
             <button id="helpBtnMenu"
                     class="btn btn-secondary"
                     aria-label="Show keyboard shortcuts (? key)">
-                <span class="btn-icon">❓</span>
+                <span class="btn-icon">?</span>
                 <span class="btn-text">Help</span>
             </button>
 
             <button id="playStoreBtnMenu"
                     class="btn btn-playstore"
                     aria-label="Get on Play Store (coming soon)">
-                <span class="btn-icon">📱</span>
+                <span class="btn-icon">⊞</span>
                 <span class="btn-text">Get on Play Store</span>
             </button>
         </div>
@@ -385,6 +385,18 @@
             <div class="help-footer">
                 <p>Welcome to Jackal's Garden - a peaceful sanctuary for nurturing emotional honesty through Nonviolent Communication.</p>
             </div>
+        </div>
+    </div>
+
+    <!-- Trait Modal (Click to Enlarge) -->
+    <div class="trait-modal-backdrop" id="traitModalBackdrop">
+        <div class="trait-modal-content" onclick="event.stopPropagation()">
+            <button class="trait-modal-close" id="traitModalClose" aria-label="Close modal">✕</button>
+            <h3 class="trait-modal-title" id="traitModalTitle">TRAIT</h3>
+            <div class="trait-modal-image">
+                <canvas id="traitModalCanvas" width="256" height="256"></canvas>
+            </div>
+            <p class="trait-modal-name" id="traitModalName">Name</p>
         </div>
     </div>
 
