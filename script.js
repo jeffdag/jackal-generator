@@ -947,6 +947,12 @@ function setupEventListeners() {
         UIController.closeHelp();
     });
 
+    // Play Store button (non-functional, coming soon)
+    document.getElementById('playStoreBtn').addEventListener('click', () => {
+        soundGenerator.playButtonClick();
+        showToast('📱 Coming soon to Play Store!');
+    });
+
     // Close overlays on background click
     document.getElementById('helpOverlay').addEventListener('click', (e) => {
         if (e.target.id === 'helpOverlay') {
