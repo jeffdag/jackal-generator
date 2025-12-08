@@ -625,6 +625,11 @@ class UIController {
         } else {
             this.clearMiniature('miniAccessory');
         }
+
+        // Setup trait modal click handlers after rendering
+        if (window.setupTraitModalHandlers) {
+            window.setupTraitModalHandlers();
+        }
     }
 
     static async renderMiniature(canvasId, imagePath) {
@@ -916,20 +921,26 @@ function setupEventListeners() {
         soundGenerator.playButtonClick();
         document.getElementById('sideMenu').classList.add('open');
         document.getElementById('menuBackdrop').classList.add('open');
+        document.getElementById('hamburgerBtn').classList.add('hidden');
     });
 
     // Menu close button
     document.getElementById('menuCloseBtn').addEventListener('click', () => {
         soundGenerator.playButtonClick();
-        document.getElementById('sideMenu').classList.remove('open');
-        document.getElementById('menuBackdrop').classList.remove('open');
+        closeMenu();
     });
 
     // Menu backdrop click
     document.getElementById('menuBackdrop').addEventListener('click', () => {
+        closeMenu();
+    });
+
+    // Helper function to close menu
+    function closeMenu() {
         document.getElementById('sideMenu').classList.remove('open');
         document.getElementById('menuBackdrop').classList.remove('open');
-    });
+        document.getElementById('hamburgerBtn').classList.remove('hidden');
+    }
 
     // Generate button
     document.getElementById('generateBtn').addEventListener('click', () => {
@@ -940,8 +951,7 @@ function setupEventListeners() {
     // Menu Download button
     document.getElementById('downloadBtnMenu').addEventListener('click', () => {
         UIController.downloadJackal();
-        document.getElementById('sideMenu').classList.remove('open');
-        document.getElementById('menuBackdrop').classList.remove('open');
+        closeMenu();
     });
 
     // Legacy Download button (if exists)
@@ -955,8 +965,7 @@ function setupEventListeners() {
     // Menu Trait panel toggle
     document.getElementById('toggleTraitsBtnMenu').addEventListener('click', () => {
         UIController.toggleTraitPanel();
-        document.getElementById('sideMenu').classList.remove('open');
-        document.getElementById('menuBackdrop').classList.remove('open');
+        closeMenu();
     });
 
     // Legacy Trait panel toggle (if exists)
@@ -981,17 +990,16 @@ function setupEventListeners() {
         const icon = document.getElementById('muteIconMenu');
         const btn = document.getElementById('muteBtnMenu');
         btn.setAttribute('aria-pressed', state.isMuted);
-        icon.textContent = state.isMuted ? '🔇' : '🔊';
+        icon.textContent = state.isMuted ? '⊗' : '♪';
 
         // Also update legacy button if it exists
         const legacyIcon = document.getElementById('muteIcon');
         const legacyBtn = document.getElementById('muteBtn');
-        if (legacyIcon) legacyIcon.textContent = state.isMuted ? '🔇' : '🔊';
+        if (legacyIcon) legacyIcon.textContent = state.isMuted ? '⊗' : '♪';
         if (legacyBtn) legacyBtn.setAttribute('aria-pressed', state.isMuted);
 
         soundGenerator.playButtonClick();
-        document.getElementById('sideMenu').classList.remove('open');
-        document.getElementById('menuBackdrop').classList.remove('open');
+        closeMenu();
     });
 
     // Legacy Mute button (if exists)
@@ -1005,8 +1013,7 @@ function setupEventListeners() {
     // Menu Help button
     document.getElementById('helpBtnMenu').addEventListener('click', () => {
         UIController.toggleHelp();
-        document.getElementById('sideMenu').classList.remove('open');
-        document.getElementById('menuBackdrop').classList.remove('open');
+        closeMenu();
     });
 
     // Legacy Help button (if exists)
@@ -1029,8 +1036,7 @@ function setupEventListeners() {
     document.getElementById('playStoreBtnMenu').addEventListener('click', () => {
         soundGenerator.playButtonClick();
         showToast('📱 Coming soon to Play Store!');
-        document.getElementById('sideMenu').classList.remove('open');
-        document.getElementById('menuBackdrop').classList.remove('open');
+        closeMenu();
     });
 
     // Legacy Play Store button (if exists)
@@ -1048,6 +1054,60 @@ function setupEventListeners() {
             UIController.closeHelp();
         }
     });
+
+    // Trait modal functionality
+    const traitModalBackdrop = document.getElementById('traitModalBackdrop');
+    const traitModalClose = document.getElementById('traitModalClose');
+    const traitModalCanvas = document.getElementById('traitModalCanvas');
+
+    // Close modal
+    function closeTraitModal() {
+        traitModalBackdrop.classList.remove('open');
+    }
+
+    traitModalClose.addEventListener('click', closeTraitModal);
+    traitModalBackdrop.addEventListener('click', (e) => {
+        if (e.target.id === 'traitModalBackdrop') {
+            closeTraitModal();
+        }
+    });
+
+    // ESC key closes modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && traitModalBackdrop.classList.contains('open')) {
+            closeTraitModal();
+        }
+    });
+
+    // Add click handlers to all trait items
+    function setupTraitModalHandlers() {
+        const traitItems = document.querySelectorAll('.trait-item');
+        traitItems.forEach((item, index) => {
+            item.addEventListener('click', () => {
+                const canvas = item.querySelector('canvas');
+                const labelText = item.querySelector('.trait-label').textContent;
+                const valueText = item.querySelector('.trait-value').textContent;
+
+                if (canvas && canvas.width > 0) {
+                    // Copy canvas content to modal
+                    const ctx = traitModalCanvas.getContext('2d');
+                    ctx.clearRect(0, 0, traitModalCanvas.width, traitModalCanvas.height);
+                    ctx.drawImage(canvas, 0, 0, traitModalCanvas.width, traitModalCanvas.height);
+
+                    // Update modal text
+                    document.getElementById('traitModalTitle').textContent = labelText;
+                    document.getElementById('traitModalName').textContent = valueText;
+
+                    // Show modal
+                    traitModalBackdrop.classList.add('open');
+                    soundGenerator.playButtonClick();
+                }
+            });
+        });
+    }
+
+    // Call after traits are rendered
+    window.setupTraitModalHandlers = setupTraitModalHandlers;
 
     // Initialize audio context on first user interaction
     document.addEventListener('click', () => {
