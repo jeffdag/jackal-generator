@@ -282,16 +282,9 @@ class JackalGenerator {
         // 6. NOSE
         jackal.nose = ASSETS.nose;
 
-        // 7. MOUTH (conditional)
-        const eyesWithBuiltInMouth = ['bright_round', 'bright_round_blue'];
-        if (eyesWithBuiltInMouth.includes(jackal.eyes)) {
-            // NO mouth (built into eyes)
-            jackal.mouth = null;
-        } else {
-            // Random mouth
-            const mouthType = this.random(ASSETS.mouths);
-            jackal.mouth = `mouth_${mouthType}.png`;
-        }
+        // 7. MOUTH (ALWAYS VISIBLE)
+        const mouthType = this.random(ASSETS.mouths);
+        jackal.mouth = `mouth_${mouthType}.png`;
 
         // 8. ACCESSORIES (optional)
         const accessoryRoll = Math.random();
@@ -315,7 +308,7 @@ class JackalGenerator {
             eyes: jackal.eyes.replace('_', ' '),
             eyebrows: jackal.eyebrows ? jackal.eyebrows.replace('eyebrow_', '').replace('.png', '') : 'none (implied)',
             nose: 'default',
-            mouth: jackal.mouth ? jackal.mouth.replace('mouth_', '').replace('.png', '') : 'integrated in eyes',
+            mouth: jackal.mouth.replace('mouth_', '').replace('.png', ''),
             accessory: jackal.accessory ? jackal.accessory.replace('accessory_', '').replace('.png', '') : 'none',
         };
     }
@@ -464,10 +457,8 @@ class CanvasRenderer {
         // 6. Nose (ALWAYS VISIBLE - singular "nose" folder)
         await this.drawLayer(`nose/${jackal.nose}`);
 
-        // 7. Mouth (if applicable)
-        if (jackal.mouth) {
-            await this.drawLayer(`mouths/${jackal.mouth}`);
-        }
+        // 7. Mouth (ALWAYS VISIBLE)
+        await this.drawLayer(`mouths/${jackal.mouth}`);
 
         // 8. Accessories (if selected)
         if (jackal.accessory) {
@@ -627,11 +618,7 @@ class UIController {
 
         await this.renderMiniature('miniNose', `nose/${jackal.nose}`);
 
-        if (jackal.mouth) {
-            await this.renderMiniature('miniMouth', `mouths/${jackal.mouth}`);
-        } else {
-            this.clearMiniature('miniMouth');
-        }
+        await this.renderMiniature('miniMouth', `mouths/${jackal.mouth}`);
 
         if (jackal.accessory) {
             await this.renderMiniature('miniAccessory', `accessories/${jackal.accessory}`);
