@@ -339,12 +339,36 @@ class ImageLoader {
         });
     }
 
-    // Preload all assets for smooth experience
-    static async preloadAllAssets() {
+    // Preload ONLY critical assets for fast initial load
+    static async preloadCriticalAssets() {
+        const criticalPaths = [
+            // Just one default base to start
+            'base/base_default_male.png',
+            // Nose (always the same)
+            `nose/${ASSETS.nose}`,
+        ];
+
+        const promises = criticalPaths.map(async (path) => {
+            try {
+                await this.loadImage(path);
+            } catch (error) {
+                console.warn(`Could not load critical asset ${path}`);
+            }
+        });
+
+        await Promise.all(promises);
+    }
+
+    // Lazy load remaining assets in background (non-blocking)
+    static lazyLoadRemainingAssets() {
         const allPaths = [];
 
-        // Bases
-        allPaths.push(...ASSETS.bases);
+        // Bases (skip the one we already loaded)
+        ASSETS.bases.forEach(base => {
+            if (base !== 'base/base_default_male.png') {
+                allPaths.push(base);
+            }
+        });
 
         // Tails
         Object.keys(ASSETS.tails).forEach(type => {
@@ -370,9 +394,6 @@ class ImageLoader {
             allPaths.push(`eyes/eyes_${type}.png`);
         });
 
-        // Nose (singular "nose" folder as per user's file structure)
-        allPaths.push(`nose/${ASSETS.nose}`);
-
         // Mouths
         ASSETS.mouths.forEach(type => {
             allPaths.push(`mouths/mouth_${type}.png`);
@@ -383,25 +404,14 @@ class ImageLoader {
             allPaths.push(`accessories/accessory_${type}.png`);
         });
 
-        const total = allPaths.length;
-        let loaded = 0;
-
-        const progressBar = document.getElementById('progressFill');
-
-        // Load all images
-        const promises = allPaths.map(async (path) => {
+        // Load in background without blocking UI
+        allPaths.forEach(async (path) => {
             try {
                 await this.loadImage(path);
-                loaded++;
-                if (progressBar) {
-                    progressBar.style.width = `${(loaded / total) * 100}%`;
-                }
             } catch (error) {
-                console.warn(`Could not load ${path}, will continue without it`);
+                // Silent fail - will load on demand if needed
             }
         });
-
-        await Promise.all(promises);
     }
 }
 
@@ -642,6 +652,9 @@ class UIController {
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         container.classList.remove('empty');
+
+        // Store the original image path as a data attribute for modal use
+        container.setAttribute('data-image-path', imagePath);
 
         try {
             const img = await ImageLoader.loadImage(imagePath);
@@ -1083,24 +1096,34 @@ function setupEventListeners() {
     function setupTraitModalHandlers() {
         const traitItems = document.querySelectorAll('.trait-item');
         traitItems.forEach((item, index) => {
-            item.addEventListener('click', () => {
-                const canvas = item.querySelector('canvas');
+            item.addEventListener('click', async () => {
+                const miniatureContainer = item.querySelector('.trait-miniature');
                 const labelText = item.querySelector('.trait-label').textContent;
                 const valueText = item.querySelector('.trait-value').textContent;
 
-                if (canvas && canvas.width > 0) {
-                    // Copy canvas content to modal
-                    const ctx = traitModalCanvas.getContext('2d');
-                    ctx.clearRect(0, 0, traitModalCanvas.width, traitModalCanvas.height);
-                    ctx.drawImage(canvas, 0, 0, traitModalCanvas.width, traitModalCanvas.height);
+                // Get the original full-size image path
+                const imagePath = miniatureContainer.getAttribute('data-image-path');
 
-                    // Update modal text
-                    document.getElementById('traitModalTitle').textContent = labelText;
-                    document.getElementById('traitModalName').textContent = valueText;
+                if (imagePath && valueText !== 'none' && valueText !== 'none (implied)') {
+                    // Load the full-size original asset (1024x1024)
+                    try {
+                        const fullImage = await ImageLoader.loadImage(imagePath);
 
-                    // Show modal
-                    traitModalBackdrop.classList.add('open');
-                    soundGenerator.playButtonClick();
+                        // Draw full-size image to modal canvas
+                        const ctx = traitModalCanvas.getContext('2d');
+                        ctx.clearRect(0, 0, traitModalCanvas.width, traitModalCanvas.height);
+                        ctx.drawImage(fullImage, 0, 0, traitModalCanvas.width, traitModalCanvas.height);
+
+                        // Update modal text
+                        document.getElementById('traitModalTitle').textContent = labelText;
+                        document.getElementById('traitModalName').textContent = valueText;
+
+                        // Show modal
+                        traitModalBackdrop.classList.add('open');
+                        soundGenerator.playButtonClick();
+                    } catch (error) {
+                        console.error('Failed to load full-size image for modal:', error);
+                    }
                 }
             });
         });
@@ -1131,26 +1154,28 @@ async function init() {
             state.generationCount = parseInt(savedCount, 10);
         }
 
-        // Preload all assets
-        await ImageLoader.preloadAllAssets();
+        // OPTIMIZATION: Only preload CRITICAL assets (2-3 files)
+        await ImageLoader.preloadCriticalAssets();
 
-        // Create floating particles
-        VisualEffects.createParticles();
-
-        // Setup event listeners
+        // Setup event listeners immediately
         setupEventListeners();
 
         // Setup keyboard shortcuts
         setupKeyboardShortcuts();
 
-        // Hide loading overlay with smooth transition
+        // Create floating particles (lightweight)
+        VisualEffects.createParticles();
+
+        // Hide loading overlay IMMEDIATELY
         loadingOverlay.classList.add('hidden');
 
-        // Brief pause for dramatic effect
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        // Generate first jackal
+        // Generate first jackal RIGHT AWAY (don't wait!)
         await generateNewJackal();
+
+        // Start lazy loading remaining assets in BACKGROUND (non-blocking)
+        setTimeout(() => {
+            ImageLoader.lazyLoadRemainingAssets();
+        }, 100);
 
         // First visit experience
         const isFirstVisit = !localStorage.getItem('jackalVisited');
